@@ -443,13 +443,13 @@ Visualization Manager:
       alpha: 1
       height: 128
       keep aspect ratio: true
-      left: 567
-      top: 243
+      left: 566
+      top: 242
       width: 300
     - Class: jsk_rviz_plugin/OverlayImage
       Enabled: true
       Name: People
-      Topic: /image_resizer/output/image
+      Topic: /label_to_mask/output
       Value: true
       alpha: 1
       height: 128
@@ -460,13 +460,24 @@ Visualization Manager:
     - Class: jsk_rviz_plugin/OverlayImage
       Enabled: true
       Name: People
-      Topic: /apply_mask_image/output
+      Topic: /multiply_mask/output
       Value: true
       alpha: 1
       height: 128
       keep aspect ratio: true
       left: 873
       top: 241
+      width: 300
+    - Class: jsk_rviz_plugin/OverlayImage
+      Enabled: true
+      Name: People
+      Topic: /apply_mask_image/output
+      Value: true
+      alpha: 1
+      height: 128
+      keep aspect ratio: true
+      left: 873
+      top: 470
       width: 300
   Enabled: true
   Global Options:
@@ -500,15 +511,15 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.624344
-        Y: -1.30988
-        Z: 1.7648
+        X: 0.883396
+        Y: -2.04001
+        Z: 1.73225
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.240399
+      Pitch: 0.245399
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.1804
+      Yaw: 3.6854
     Saved: ~
 Window Geometry:
   Displays:
@@ -528,5 +539,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1612
-  X: 15
-  Y: 212
+  X: -10
+  Y: 182
