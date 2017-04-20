@@ -1,13 +1,8 @@
 <launch>
 
-  <arg name="HRP2" default="false" />
+  <arg name="HRP2" default="true" />
   <arg name="FIXED_FRAME" default="odom" if="$(arg HRP2)" />
   <arg name="FIXED_FRAME" default="camera_link" unless="$(arg HRP2)" />
-
-  <node name="world_tf_publisher"
-        pkg="tf" type="static_transform_publisher"
-        args="0 0 0 0 0 0 world $(arg FIXED_FRAME) 10">
-  </node>
 
   <arg name="MANAGER" value="nodelet_manager2" />
   <node name="$(arg MANAGER)"
@@ -137,12 +132,15 @@
     </rosparam>
   </node>
   <!-- depth -->
+  <!--
   <node name="mask_to_polygon"
         pkg="nodelet" type="nodelet"
         args="load jsk_perception/MaskImageToRect $(arg MANAGER)">
     <remap from="~input" to="filter_mask_with_size/output" />
   </node>
+  -->
   <!-- color + depth -->
+  <!--
   <node name="consensus_tracking"
         pkg="nodelet" type="nodelet"
         args="load jsk_perception/ConsensusTracking $(arg MANAGER)">
@@ -152,8 +150,11 @@
       approximate_sync: true
       queue_size: 30
     </rosparam>
+
   </node>
+  -->
   <!-- color + color -->
+  <!--
   <node name="apply_mask_image_tracking"
         pkg="nodelet" type="nodelet"
         args="load jsk_perception/ApplyMaskImage $(arg MANAGER)">
@@ -164,6 +165,7 @@
       queue_size: 30
     </rosparam>
   </node>
+  -->
 
   <node name="rviz"
         pkg="rviz"

@@ -90,7 +90,7 @@
   </node>
   <node name="consensus_tracking"
         pkg="nodelet" type="nodelet"
-        args="load jsk_perception/ConsensusTracking $(arg MANAGER)">
+        args="standalone jsk_perception/ConsensusTracking $(arg MANAGER)">
     <remap from="~input" to="/camera/rgb/image_rect_color" />
     <remap from="~input/polygon" to="mask_to_polygon/output" />
     <rosparam>
