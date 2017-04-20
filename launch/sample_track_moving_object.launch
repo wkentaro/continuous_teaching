@@ -1,0 +1,32 @@
+<launch>
+
+  <include file="$(find jsk_perception)/sample/sample_filter_mask_image_with_size.launch">
+    <arg name="gui" value="true" />
+  </include>
+
+  <node name="mask_to_polygon"
+        pkg="jsk_perception" type="mask_image_to_rect">
+    <remap from="~input" to="filter_mask_image_with_size/output" />
+  </node>
+  <node name="consensus_tracking"
+        pkg="jsk_perception" type="consensus_tracking">
+    <remap from="~input" to="/camera/rgb/image_rect_color" />
+    <remap from="~input/polygon" to="mask_to_polygon/output" />
+  </node>
+  <node name="apply_mask_image_tracking"
+        pkg="jsk_perception" type="apply_mask_image">
+    <remap from="~input" to="/camera/rgb/image_rect_color" />
+    <remap from="~input/mask" to="consensus_tracking/output/mask" />
+    <rosparam>
+      approximate_sync: false
+      queue_size: 10
+      clip: false
+    </rosparam>
+  </node>
+
+  <node name="image_view_tracking"
+        pkg="image_view" type="image_view">
+    <remap from="image" to="apply_mask_image_tracking/output" />
+  </node>
+
+</launch>
