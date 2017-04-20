@@ -1,0 +1,174 @@
+<launch>
+
+  <arg name="HRP2" default="false" />
+  <arg name="FIXED_FRAME" default="odom" if="$(arg HRP2)" />
+  <arg name="FIXED_FRAME" default="camera_link" unless="$(arg HRP2)" />
+
+  <node name="world_tf_publisher"
+        pkg="tf" type="static_transform_publisher"
+        args="0 0 0 0 0 0 world $(arg FIXED_FRAME) 10">
+  </node>
+
+  <arg name="MANAGER" value="nodelet_manager2" />
+  <node name="$(arg MANAGER)"
+        pkg="nodelet"
+        type="nodelet"
+        args="manager" />
+
+  <!-- depth -->
+  <node name="passthrough_y"
+        pkg="nodelet" type="nodelet"
+        args="load pcl/PassThrough $(arg MANAGER)">
+    <remap from="~input" to="/camera/depth_registered/points" />
+    <rosparam subst_value="true">
+      input_frame: $(arg FIXED_FRAME)
+      filter_field_name: y
+      filter_limit_min: -0.4
+      filter_limit_max: 0.4
+      keep_organized: true
+    </rosparam>
+  </node>
+
+  <!-- depth -->
+  <node name="passthrough_x"
+        pkg="nodelet" type="nodelet"
+        args="load pcl/PassThrough $(arg MANAGER)">
+    <remap from="~input" to="passthrough_y/output" />
+    <rosparam subst_value="true">
+      input_frame: $(arg FIXED_FRAME)
+      filter_field_name: x
+      filter_limit_min: 1.0
+      filter_limit_max: 2.0
+      keep_organized: true
+    </rosparam>
+  </node>
+
+  <!-- depth -->
+  <node name="point_cloud_to_mask_image"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_pcl_utils/PointCloudToMaskImage $(arg MANAGER)">
+    <remap from="~input" to="passthrough_x/output" />
+  </node>
+
+  <!-- depth -->
+  <node name="convex_hull_mask_image"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/ConvexHullMaskImage $(arg MANAGER)">
+    <remap from="~input" to="point_cloud_to_mask_image/output" />
+  </node>
+
+  <!-- color + depth -->
+  <node name="apply_mask_image"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/ApplyMaskImage $(arg MANAGER)">
+    <remap from="~input" to="/camera/rgb/half/image_rect_color" if="$(arg HRP2)"/>
+    <remap from="~input" to="/camera/rgb/image_rect_color" unless="$(arg HRP2)"/>
+    <remap from="~input/mask" to="convex_hull_mask_image/output" />
+    <rosparam>
+      approximate_sync: true
+      clip: false
+    </rosparam>
+  </node>
+
+  <!-- color -->
+  <node name="fback_flow"
+        pkg="nodelet" type="nodelet"
+        args="load fback_flow/fback_flow $(arg MANAGER)">
+    <remap from="image" to="apply_mask_image/output" />
+    <rosparam>
+      use_camera_info: false
+    </rosparam>
+  </node>
+  <!-- color -->
+  <node name="flow_velocity_thresholding"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/FlowVelocityThresholding $(arg MANAGER)">
+    <remap from="~input/flows" to="fback_flow/flows" />
+    <remap from="~input/camera_info" to="/camera/rgb/half/camera_info" if="$(arg HRP2)"/>
+    <remap from="~input/camera_info" to="/camera/rgb/camera_info" unless="$(arg HRP2)"/>
+    <rosparam>
+      use_camera_info: true
+      window_size: 16
+      threshold: 5
+    </rosparam>
+  </node>
+  <!-- depth + color -->
+  <node name="multiply_mask"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/MultiplyMaskImage $(arg MANAGER)">
+    <remap from="~input/src1" to="convex_hull_mask_image/output" />
+    <remap from="~input/src2" to="flow_velocity_thresholding/output" />
+    <rosparam>
+      approximate_sync: true
+      queue_size: 10
+    </rosparam>
+  </node>
+  <!-- depth -->
+  <node name="convex_hull_mask_image_moving_obj"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/ConvexHullMaskImage $(arg MANAGER)">
+    <remap from="~input" to="multiply_mask/output" />
+  </node>
+  <!-- depth + depth -->
+  <node name="filter_mask_with_size"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/FilterMaskImageWithSize $(arg MANAGER)"
+        output="screen">
+    <remap from="~input" to="convex_hull_mask_image_moving_obj/output" />
+    <remap from="~input/reference" to="convex_hull_mask_image/output" />
+    <rosparam>
+      approximate_sync: false
+      min_size: 0.01
+      max_size: 0.3
+      min_relative_size: 0.01
+      max_relative_size: 0.3
+    </rosparam>
+  </node>
+  <node name="apply_mask_image_filtered"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/ApplyMaskImage $(arg MANAGER)">
+    <remap from="~input" to="/camera/rgb/half/image_rect_color" if="$(arg HRP2)"/>
+    <remap from="~input" to="/camera/rgb/image_rect_color" unless="$(arg HRP2)"/>
+    <remap from="~input/mask" to="filter_mask_with_size/output" />
+    <rosparam>
+      approximate_sync: true
+      queue_size: 100
+      clip: false
+    </rosparam>
+  </node>
+  <!-- depth -->
+  <node name="mask_to_polygon"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/MaskImageToRect $(arg MANAGER)">
+    <remap from="~input" to="filter_mask_with_size/output" />
+  </node>
+  <!-- color + depth -->
+  <node name="consensus_tracking"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/ConsensusTracking $(arg MANAGER)">
+    <remap from="~input" to="apply_mask_image/output" />
+    <remap from="~input/polygon" to="mask_to_polygon/output" />
+    <rosparam>
+      approximate_sync: true
+      queue_size: 30
+    </rosparam>
+  </node>
+  <!-- color + color -->
+  <node name="apply_mask_image_tracking"
+        pkg="nodelet" type="nodelet"
+        args="load jsk_perception/ApplyMaskImage $(arg MANAGER)">
+    <remap from="~input" to="apply_mask_image/output" />
+    <remap from="~input/mask" to="consensus_tracking/output/mask" />
+    <rosparam>
+      approximate_sync: false
+      queue_size: 30
+    </rosparam>
+  </node>
+
+  <node name="rviz"
+        pkg="rviz"
+        type="rviz"
+        args="-d $(find continuous_teaching)/rvizconfig/default.rviz">
+  </node>
+
+</launch>

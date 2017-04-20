@@ -8,6 +8,9 @@
         type="play"
         args="$(arg filename) $(arg options)" />
 
+  <param name="robot_description"
+         textfile="$(find hrpsys_ros_bridge_tutorials)/models/$(optenv ROBOT)_WH_SENSORS.urdf" />
+
   <arg name="MANAGER" value="nodelet_manager" />
   <node name="$(arg MANAGER)"
         pkg="nodelet"
@@ -28,6 +31,23 @@
       <remap from="image_rect" to="image_rect_color" />
     </node>
   </group>
+
+  <node name="resize_image_color"
+        pkg="nodelet" type="nodelet"
+        args="load resized_image_transport/ImageResizer $(arg MANAGER)">
+    <remap from="~input/camera_info" to="/camera/rgb/camera_info" />
+    <remap from="~input/image" to="/camera/rgb/image_rect_color" />
+    <remap from="~output/camera_info" to="/camera/rgb/half/camera_info" />
+    <remap from="~output/image" to="/camera/rgb/half/image_rect_color" />
+    <rosparam>
+      use_messages: false
+      use_camera_info: true
+      resize_scale_x: 0.5
+      resize_scale_y: 0.5
+      interpolation: LINEAR
+    </rosparam>
+  </node>
+
 
   <group ns="/camera/depth_registered">
     <node name="republish_depth"
