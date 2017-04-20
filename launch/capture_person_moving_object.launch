@@ -173,4 +173,26 @@
         args="-d $(find continuous_teaching)/rvizconfig/default.rviz">
   </node>
 
+  <node name="data_collection_server"
+        pkg="jsk_data" type="data_collection_server.py"
+        output="screen">
+    <rosparam>
+      with_request: false
+      save_dir: ~/.ros/continuous_teaching/capture_person_moving_object
+      topics:
+        - name: /camera/rgb/image_rect_color
+          msg_class: sensor_msgs/Image
+          fname: image.jpg
+          savetype: ColorImage
+        - name: filter_mask_with_size/output
+          msg_class: sensor_msgs/Image
+          fname: mask.jpg
+          savetype: ColorImage
+        - name: apply_mask_image_filtered/output
+          msg_class: sensor_msgs/Image
+          fname: image_masked.jpg
+          savetype: ColorImage
+    </rosparam>
+  </node>
+
 </launch>

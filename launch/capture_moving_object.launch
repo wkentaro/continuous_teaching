@@ -75,7 +75,7 @@
   <node name="apply_mask_image_filtered"
         pkg="nodelet" type="nodelet"
         args="load jsk_perception/ApplyMaskImage $(arg MANAGER)">
-    <remap from="~input" to="apply_mask_image_moving_obj/output" />
+    <remap from="~input" to="/camera/rgb/image_rect_color" />
     <remap from="~input/mask" to="filter_mask_with_size/output" />
     <rosparam>
       approximate_sync: false
@@ -83,6 +83,7 @@
       clip: false
     </rosparam>
   </node>
+  <!--
   <node name="mask_to_polygon"
         pkg="nodelet" type="nodelet"
         args="load jsk_perception/MaskImageToRect $(arg MANAGER)">
@@ -109,6 +110,7 @@
       clip: false
     </rosparam>
   </node>
+  -->
   <!--
   <node name="passthrough_z"
         pkg="nodelet" type="nodelet"
@@ -158,6 +160,28 @@
         pkg="rviz"
         type="rviz"
         args="-d $(find continuous_teaching)/rvizconfig/rgb.rviz">
+  </node>
+
+  <node name="data_collection_server"
+        pkg="jsk_data" type="data_collection_server.py"
+        output="screen">
+    <rosparam>
+      with_request: false
+      save_dir: ~/.ros/continuous_teaching/capture_moving_object
+      topics:
+        - name: /camera/rgb/image_rect_color
+          msg_class: sensor_msgs/Image
+          fname: image.jpg
+          savetype: ColorImage
+        - name: filter_mask_with_size/output
+          msg_class: sensor_msgs/Image
+          fname: mask.jpg
+          savetype: ColorImage
+        - name: apply_mask_image_filtered/output
+          msg_class: sensor_msgs/Image
+          fname: image_masked.jpg
+          savetype: ColorImage
+    </rosparam>
   </node>
 
 </launch>
