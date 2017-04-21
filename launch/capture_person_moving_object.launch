@@ -112,6 +112,7 @@
     <remap from="~input" to="convex_hull_mask_image_moving_obj/output" />
     <remap from="~input/reference" to="convex_hull_mask_image/output" />
     <rosparam>
+      use_reference: true
       approximate_sync: false
       min_size: 0.01
       max_size: 0.3
