@@ -85,7 +85,7 @@ Visualization Manager:
     - Class: jsk_rviz_plugin/OverlayImage
       Enabled: true
       Name: MovingObj
-      Topic: /convex_hull_mask_image_moving_obj/output
+      Topic: /concave_hull_mask_image/output
       Value: true
       alpha: 1
       height: 128
@@ -198,4 +198,4 @@ Window Geometry:
     collapsed: false
   Width: 1370
   X: -10
-  Y: 62
+  Y: 52

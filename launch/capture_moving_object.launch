@@ -34,6 +34,7 @@
       threshold: 5
     </rosparam>
   </node>
+  <!--
   <node name="erode_mask_image"
         pkg="nodelet" type="nodelet"
         args="load jsk_perception/ErodeMaskImage $(arg MANAGER)">
@@ -42,16 +43,17 @@
       size: 10
     </rosparam>
   </node>
-  <node name="convex_hull_mask_image_moving_obj"
+  -->
+  <node name="concave_hull_mask_image"
         pkg="nodelet" type="nodelet"
-        args="load jsk_perception/ConvexHullMaskImage $(arg MANAGER)">
-    <remap from="~input" to="erode_mask_image/output" />
+        args="load jsk_perception/ConcaveHullMaskImage $(arg MANAGER)">
+    <remap from="~input" to="flow_velocity_thresholding/output" />
   </node>
   <node name="apply_mask_image_moving_obj"
         pkg="nodelet" type="nodelet"
         args="load jsk_perception/ApplyMaskImage $(arg MANAGER)">
     <remap from="~input" to="/camera/rgb/image_rect_color" />
-    <remap from="~input/mask" to="convex_hull_mask_image_moving_obj/output" />
+    <remap from="~input/mask" to="concave_hull_mask_image/output" />
     <rosparam>
       approximate_sync: false
       queue_size: 100
@@ -62,14 +64,12 @@
         pkg="nodelet" type="nodelet"
         args="load jsk_perception/FilterMaskImageWithSize $(arg MANAGER)"
         output="screen">
-    <remap from="~input" to="convex_hull_mask_image_moving_obj/output" />
-    <remap from="~input/reference" to="convex_hull_mask_image_moving_obj/output" />
+    <remap from="~input" to="concave_hull_mask_image/output" />
     <rosparam>
+      use_reference: false
       approximate_sync: false
-      min_size: 0.1
-      max_size: 0.4
-      min_relative_size: 0
-      max_relative_size: 1
+      min_size: 0.05
+      max_size: 0.8
     </rosparam>
   </node>
   <node name="apply_mask_image_filtered"
